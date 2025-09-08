@@ -4,23 +4,20 @@
 # Author:   David Vogel <david@davidvogel.xyz>
 # Date:     2025 Sep 7, Sun
 # License:  GPL v3.0
+# Desc:     dev-tmux allows a user to start `tmux` with a "session loadout"
 
-# About:
-# dev-tmux allows a user to start `tmux` with a "session loadout"
-# Using the `SESH` variable, control the "session loadout" (and the order)
-# NOTE: the `sleep 1` is crucial for preserving the order of the sessions
-
-# Set the "preferred session" with `PREF_SESH`
-# `PREF_SESH` will be the session you drop into when `dev-tmux` returns
+# `PREF_SESH` will be the open session when `dev-tmux` returns
 PREF_SESH="homedir"
 
 # `SESH` is an array of sessions to open
 # The format is `"<NAME>:<PATH>"`
+# Note that the list's order is preserved
 SESH=(
-    "${PREF_SESH}:~/"
-    "scratch:~/"
+    "${PREF_SESH}:${HOME}"
+    "scratch:${HOME}"
 )
 
+# NOTE: the `sleep 1` is crucial for preserving the order of the sessions
 dt_loop() {
     for s in "${SESH[@]}"; do
         s_name="${s%%:*}"
