@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# This is a script for starting tmux without manually opening all the sessions I'd want open
+# In addition, this standardizes how sessions are opened
+
+tmux_message() {
+    echo "creating session for $SESH"
+}
+
+SESH=homedir
+tmux_message
+tmux new-session -ds $SESH -c ~/ && sleep 1
+
+# add more sessions here in the format of:
+# SESH=basedir
+# tmux_message
+# tmux new-session -ds $SESH -c ~/<PATH_TO>/$SESH && sleep 1
+
+tmux a -t homedir
