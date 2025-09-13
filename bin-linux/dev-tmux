@@ -48,8 +48,9 @@ dt_loop() {
     for s in "${SESH[@]}"; do
         s_name="${s%%:*}"
         s_path="${s##*:}"
+        ((++n))
 
-        echo "[INFO]: Creating session for \"$s_name\"."
+        echo "[INFO]: Creating session ${n}/${total} - \"$s_name\"."
         tmux new-session -ds "$s_name" -c $s_path
         sleep 1
     done
@@ -57,6 +58,9 @@ dt_loop() {
 
 main() {
     source_conf
+
+    total=${#SESH[@]}
+    n=0
 
     dt_loop
 
