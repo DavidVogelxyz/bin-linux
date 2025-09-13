@@ -28,18 +28,20 @@ SESH=(
     "scratch:${HOME}"
 )
 
-# If main config file path exists, source it
-if [[ -f "$CONFIG_FILE" ]]; then
-    source "$CONFIG_FILE"
-fi
-
-# If main config file path does NOT exists
-# Then, check for alternate path
-if [[ ! -f "$CONFIG_FILE" ]]; then
-    if [[ -f "$CONFIG_FILE_NAME" ]]; then
-        source "$CONFIG_FILE_NAME"
+source_conf() {
+    # If main config file path exists, source it
+    if [[ -f "$CONFIG_FILE" ]]; then
+        source "$CONFIG_FILE"
     fi
-fi
+
+    # If main config file path does NOT exists
+    # Then, check for alternate path
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        if [[ -f "$CONFIG_FILE_NAME" ]]; then
+            source "$CONFIG_FILE_NAME"
+        fi
+    fi
+}
 
 # NOTE: the `sleep 1` is crucial for preserving the order of the sessions
 dt_loop() {
@@ -54,6 +56,8 @@ dt_loop() {
 }
 
 main() {
+    source_conf
+
     dt_loop
 
     echo "[INFO]: Attaching to \"${PREF_SESH}\"."
