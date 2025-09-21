@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+# Name:     git-compare-dates
+# Author:   David Vogel <david@davidvogel.xyz>
+# Date:     2025 Sep 8, Mon
+# License:  GPL v3.0
+# Desc:     `git-compare-dates` quickly checks author vs committer info
+
+count=0
+gitlog=$(git log --pretty=fuller | grep -A 4 "^commit")
+
+gcd-loop() {
+    echo "[INFO]: Performing the loop..."
+
+    while read -r line; do
+        case "$line" in
+            commit*)
+                local commithash="${line##* }";
+                commithash="${commithash:0:7}";
+                commithash="${commithash@U}";;
+            Author:*)
+                local authorname="${line##*:     }";;
+            AuthorDate*)
+                local authordate="${line##*: }";;
+            Commit:*)
+                local commitauthorname="${line##*:     }";
+
+                if ! [[ "$authorname" == "$commitauthorname" ]]; then
+                    echo "[WARN]: Author names do not agree for commit \"$commithash\"."
+                    echo "[WARN]: ${commithash}: \"$authorname\" vs \"$commitauthorname\""
+                    count+=1
+                fi;
+
+                continue;;
+            CommitDate*)
+                local committerdate="${line##*: }";
+
+                if ! [[ "$authordate" == "$committerdate" ]]; then
+                    echo "[WARN]: Dates do not agree for commit \"$commithash\"."
+                    echo "[WARN]: ${commithash}: \"$authordate\" vs \"$committerdate\""
+                    count+=1
+                fi;
+
+                continue;;
+            *)
+                continue;;
+        esac
+    done <<< "$gitlog"
+}
+
+main() {
+    gcd-loop
+
+    if (( count == 0 )); then
+        echo "[INFO]: No disagreements detected."
+    fi
+
+    echo "[INFO]: Comparison complete!"
+}
+
+main
