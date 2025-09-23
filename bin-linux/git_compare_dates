@@ -7,7 +7,15 @@
 # Desc:     `git-compare-dates` quickly checks author vs committer info
 
 count=0
-gitlog=$(git log --pretty=fuller | grep -A 4 "^commit")
+
+check-git-repo() {
+    if ! [[ -d .git ]]; then
+        echo "[ERROR]: The current directory is not a Git repo."
+        exit 1
+    fi
+
+    gitlog=$(git log --pretty=fuller | grep -A 4 "^commit")
+}
 
 gcd-loop() {
     echo "[INFO]: Performing the loop..."
@@ -49,6 +57,8 @@ gcd-loop() {
 }
 
 main() {
+    check-git-repo
+
     gcd-loop
 
     if (( count == 0 )); then
