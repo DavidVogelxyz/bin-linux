@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+# Name:     git-package-manager
+# Author:   David Vogel <david@davidvogel.xyz>
+# Date:     2025 Sep 14, Sun
+# License:  GPL v3.0
+# Desc:     `git-package-manager` makes managing Git repos easy
+
+SRC_DIR="${HOME}/.local/src"
+PULL_CHECK="Already up to date."
+
+git_mgmt() {
+    echo "[INFO]: Checking - \"$dir\""
+
+    git fetch > /dev/null 2>&1
+
+    if [[ "$?" == 128 ]]; then
+        repos_with_errors+=("$dir")
+        return 0
+    fi
+
+    OUTPUT=$(git pull)
+
+    if ! [[ "$OUTPUT" == "$PULL_CHECK" ]]; then
+        repos_updated+=("$dir")
+    fi
+}
+
+main() {
+    repos_with_errors=()
+    repos_updated=()
+
+    cd $SRC_DIR
+
+    for dir in *; do
+        cd $dir
+
+        # operate within dir
+        git_mgmt
+
+        cd ..
+    done
+
+    if ! [[ "${#repos_with_errors[@]}" == 0 ]]; then
+        echo
+        echo "[WARN]: The following directories were not updated cleanly:"
+
+        for repo in "${repos_with_errors[@]}"; do
+            echo "[WARN]: $repo"
+        done
+    fi
+
+    if ! [[ "${#repos_updated[@]}" == 0 ]]; then
+        echo
+        echo "[INFO]: The following directories were updated:"
+
+        for repo in "${repos_updated[@]}"; do
+            echo "[INFO]: $repo"
+        done
+    fi
+}
+
+main
