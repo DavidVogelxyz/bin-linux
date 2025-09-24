@@ -10,28 +10,33 @@ SRC_DIR="${HOME}/.local/src"
 PULL_CHECK="Already up to date."
 
 git_mgmt() {
-    echo "[INFO]: Checking - \"$dir\""
+    echo "[INFO]: Attempting to update \"$dir\"."
 
     git fetch > /dev/null 2>&1
 
     if [[ "$?" == 128 ]]; then
-        repos_with_errors+=("$dir")
+        repos_bad_fetch+=("$dir")
         return 0
     fi
 
-    OUTPUT=$(git pull)
+    OUTPUT=$(git pull 2>/dev/null)
+
+    if [[ "$?" == 128 ]]; then
+        repos_bad_pull+=("$dir")
+        return 0
+    fi
+
+    if [[ "$OUTPUT" == "$PULL_CHECK" ]]; then
+        repos_no_change+=("$dir")
+        return 0
+    fi
 
     if ! [[ "$OUTPUT" == "$PULL_CHECK" ]]; then
         repos_updated+=("$dir")
     fi
 }
 
-main() {
-    repos_with_errors=()
-    repos_updated=()
-
-    cd $SRC_DIR
-
+gpm-loop() {
     for dir in *; do
         cd $dir
 
@@ -40,24 +45,49 @@ main() {
 
         cd ..
     done
+}
 
-    if ! [[ "${#repos_with_errors[@]}" == 0 ]]; then
+gpm-results() {
+    if ! [[ "${#repos_no_change[@]}" == 0 ]]; then
         echo
-        echo "[WARN]: The following directories were not updated cleanly:"
+        echo "[INFO]: The following directories were already up-to-date:"
 
-        for repo in "${repos_with_errors[@]}"; do
-            echo "[WARN]: $repo"
-        done
+        printf -- "- %s\n" "${repos_no_change[@]}"
     fi
 
     if ! [[ "${#repos_updated[@]}" == 0 ]]; then
         echo
-        echo "[INFO]: The following directories were updated:"
+        echo "[INFO]: The following directories were updated successfully:"
 
-        for repo in "${repos_updated[@]}"; do
-            echo "[INFO]: $repo"
-        done
+        printf -- "- %s\n" "${repos_updated[@]}"
     fi
+
+    if ! [[ "${#repos_bad_fetch[@]}" == 0 ]]; then
+        echo
+        echo "[WARN]: The following directories did not fetch cleanly:"
+
+        printf -- "- %s\n" "${repos_bad_fetch[@]}"
+    fi
+
+    if ! [[ "${#repos_bad_pull[@]}" == 0 ]]; then
+        echo
+        echo "[WARN]: The following directories did not pull cleanly:"
+
+        printf -- "- %s\n" "${repos_bad_pull[@]}"
+    fi
+}
+
+main() {
+    repos_bad_fetch=()
+    repos_bad_pull=()
+    repos_no_change=()
+    repos_updated=()
+
+    cd $SRC_DIR
+
+    gpm-loop
+
+    gpm-results
 }
 
 main
