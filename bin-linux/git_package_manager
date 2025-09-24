@@ -10,6 +10,11 @@ SRC_DIR="${HOME}/.local/src"
 PULL_CHECK="Already up to date."
 
 git_mgmt() {
+    if ! [[ -d .git ]]; then
+        dirs_not_repos+=("$dir")
+        return 0
+    fi
+
     echo "[INFO]: Attempting to update \"$dir\"."
 
     git fetch > /dev/null 2>&1
@@ -38,6 +43,11 @@ git_mgmt() {
 
 gpm-loop() {
     for dir in *; do
+        if ! [[ -d $dir ]]; then
+            not_dirs+=("$dir")
+            continue
+        fi
+
         cd $dir
 
         # operate within dir
@@ -62,6 +72,20 @@ gpm-results() {
         printf -- "- %s\n" "${repos_updated[@]}"
     fi
 
+    if ! [[ "${#not_dirs[@]}" == 0 ]]; then
+        echo
+        echo "[INFO]: The following objects are not directories:"
+
+        printf -- "- %s\n" "${not_dirs[@]}"
+    fi
+
+    if ! [[ "${#dirs_not_repos[@]}" == 0 ]]; then
+        echo
+        echo "[INFO]: The following directories are not Git repos:"
+
+        printf -- "- %s\n" "${dirs_not_repos[@]}"
+    fi
+
     if ! [[ "${#repos_bad_fetch[@]}" == 0 ]]; then
         echo
         echo "[WARN]: The following directories did not fetch cleanly:"
@@ -78,6 +102,8 @@ gpm-results() {
 }
 
 main() {
+    not_dirs=()
+    dirs_not_repos=()
     repos_bad_fetch=()
     repos_bad_pull=()
     repos_no_change=()
