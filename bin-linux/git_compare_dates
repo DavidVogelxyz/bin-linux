@@ -9,7 +9,9 @@
 count=0
 
 check-git-repo() {
-    if ! [[ -d .git ]]; then
+    git status > /dev/null 2>&1
+
+    if [[ $? == 128 ]]; then
         echo "[ERROR]: The current directory is not a Git repo."
         exit 1
     fi
