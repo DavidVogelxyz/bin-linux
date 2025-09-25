@@ -61,11 +61,11 @@ gcd-loop() {
 }
 
 gcd-results() {
-    echo "[INFO]: Comparison complete!"
+    echo "[INFO]: Comparison complete."
 
     if (( count == 0 )); then
         echo
-        echo "[INFO]: No disagreements detected."
+        echo "[INFO]: No disagreements detected!"
     fi
 
     if ! (( count == 0 )); then
