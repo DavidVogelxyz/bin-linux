@@ -77,14 +77,14 @@ gpm-results() {
 
     if ! [[ "${#repos_no_change[@]}" == 0 ]]; then
         echo
-        echo "[INFO]: The following directories were already up-to-date:"
+        echo "[INFO]: The following Git repos were already up-to-date:"
 
         printf -- "- %s\n" "${repos_no_change[@]}"
     fi
 
     if ! [[ "${#repos_updated[@]}" == 0 ]]; then
         echo
-        echo "[INFO]: The following directories were updated successfully:"
+        echo "[INFO]: The following Git repos were updated successfully:"
 
         printf -- "- %s\n" "${repos_updated[@]}"
     fi
