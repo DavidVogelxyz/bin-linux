@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# Name:     show-ssh-agent
+# Author:   David Vogel <david@davidvogel.xyz>
+# Date:     2025 Sep 27, Saturday
+# License:  GPL v3.0
+# Desc:     `show-ssh-agent` grabs `SSH_AUTH_SOCK` and prints it as output
+
+ssh_agent_info=$(env | grep SSH_AUTH_SOCK)
+
+if [[ -z "$ssh_agent_info" ]]; then
+    echo "It appears that this script could not grab the \`SSH_AUTH_SOCK\`."
+    echo "Are you sure that you're connected via \`ssh\` to a server that is already running \`ssh-agent\`?"
+    echo "If so, make sure that you run this script after attaching to an already existing \`tmux\` session."
+    exit 1
+fi
+
+echo "This script assumes the user is attempting to fix \`ssh-agent\` for an \`ssh\` connection into \`tmux\`."
+echo
+echo "Detach from \`tmux\` and run the following command:"
+echo
+echo "export SSH_AUTH_SOCK=${ssh_agent_info##*=}"
+echo
+echo "Once set, re-attach to \`tmux\`, and all sessions created during that SSH connection will connect to the \`ssh-agent\`!"
