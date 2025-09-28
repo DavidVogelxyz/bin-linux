@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-# Name:     git-package-manager
+# Name:     git_package_manager
 # Author:   David Vogel <david@davidvogel.xyz>
 # Date:     2025 Sep 14, Sun
 # License:  GPL v3.0
-# Desc:     `git-package-manager` makes managing Git repos easy
+# Desc:     `git_package_manager` makes managing Git repos easy
 
 SRC_DIR="${HOME}/.local/src"
 PULL_CHECK="Already up to date."

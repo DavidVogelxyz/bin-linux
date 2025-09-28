@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-# Name:     git-compare-dates
+# Name:     git_compare_dates
 # Author:   David Vogel <david@davidvogel.xyz>
 # Date:     2025 Sep 8, Mon
 # License:  GPL v3.0
-# Desc:     `git-compare-dates` quickly checks author vs committer info
+# Desc:     `git_compare_dates` quickly checks author vs committer info
 
 count=0
 
