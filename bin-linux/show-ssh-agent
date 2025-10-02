@@ -2,7 +2,7 @@
 
 # Name:     show-ssh-agent
 # Author:   David Vogel <david@davidvogel.xyz>
-# Date:     2025 Sep 27, Saturday
+# Date:     2025 Sep 27, Sat
 # License:  GPL v3.0
 # Desc:     `show-ssh-agent` grabs `SSH_AUTH_SOCK` and prints it as output
 
