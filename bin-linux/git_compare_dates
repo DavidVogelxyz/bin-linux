@@ -15,8 +15,6 @@ check-git-repo() {
         echo "[ERROR]: The current directory is not a Git repo."
         exit 1
     fi
-
-    gitlog=$(git log --pretty=fuller | grep -A 4 "^commit")
 }
 
 gcd-loop() {
@@ -57,7 +55,7 @@ gcd-loop() {
             *)
                 continue;;
         esac
-    done <<< "$gitlog"
+    done < <(git log --pretty=fuller | grep -A 4 "^commit")
 }
 
 gcd-results() {
@@ -69,20 +67,21 @@ gcd-results() {
     fi
 
     if ! (( count == 0 )); then
-        local gitlog=$(git log --oneline | grep -i -A 1 "^${hash_oldest_disagreement}")
         local idx=1
 
         while read -r line; do
+            # Skip the oldest disagreement
             if (( idx == 1 )); then
                 idx=$(( idx + 1 ))
                 continue
             fi
 
+            # Grab the hash of the previous commit
             if (( idx == 2 )); then
                 hash_rebase="${line%% *}"
                 break
             fi
-        done <<< "${gitlog[@]}"
+        done < <(git log --oneline | grep -i -A 1 "^${hash_oldest_disagreement}")
 
         echo
         echo "[INFO]: To address all discrepancies, rebase from commit ${hash_rebase@U}"
