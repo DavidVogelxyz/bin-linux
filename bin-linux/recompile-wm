@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# Name:     recompile-wm
+# Author:   David Vogel <david@davidvogel.xyz>
+# Date:     2025 Oct 17, Fri
+# License:  GPL v3.0
+# Desc:     `recompile-wm` is a script for recompiling software for DWM.
+
+list_to_recompile=(
+    "${HOME}/.local/src/dmenu"
+    "${HOME}/.local/src/dwm"
+    "${HOME}/.local/src/dwmblocks"
+    "${HOME}/.local/src/st"
+)
+
+error() {
+    echo "$1" >&2 \
+        && exit 1
+}
+
+recompile-loop() {
+    for d in "${list_to_recompile[@]}"; do
+        cd "$d"
+
+        echo "[INFO]: Recompiling \`${d##*/}\`..."
+        sudo make install > /dev/null 2>&1 \
+            && echo "[INFO]: Successfully recompiled \`${d##*/}\`!" \
+            || error "[ERROR]: Failed to recompile \`${d##*/}\`. Exiting now."
+
+        cd - > /dev/null 2>&1
+    done
+}
+
+main() {
+    recompile-loop
+
+    echo
+    echo "[INFO]: Successfully recompiled all software!"
+}
+
+main
