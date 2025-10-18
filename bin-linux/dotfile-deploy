@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+
+# Name:     dotfile-deploy
+# Author:   David Vogel <david@davidvogel.xyz>
+# Date:     2025 Oct 17, Fri
+# License:  GPL v3.0
+# Desc:     `dotfile-deploy` is a stateless script for deploying my dotfiles.
+
+DATE="$(date +"%Y-%m-%d_%H-%M-%S")"
+DIR_BACKUPS="${HOME}/backup-configs_${DATE}"
+
+dirs_to_confirm=(
+    "${HOME}/.cache"
+    "${HOME}/.config"
+    "${HOME}/.local"
+    "${HOME}/.local/bin"
+    "${HOME}/.local/share"
+    "${HOME}/.local/src"
+    "${HOME}/.local/state"
+)
+
+# The format of lines in `$repo_list` is:
+# "PATH REMOTE SYMLINK_SRC SYMLINK_DEST"
+repo_list=(
+    "${HOME}/.dotfiles https://github.com/DavidVogelxyz/dotfiles ${HOME}/.dotfiles ${HOME}/.local/src/dotfiles"
+    "${HOME}/.local/src/vim https://github.com/DavidVogelxyz/vim ${HOME}/.local/src/vim ${HOME}/.vim"
+    "${HOME}/.local/src/bin-linux https://github.com/DavidVogelxyz/bin-linux ${HOME}/.local/src/bin-linux/bin-linux ${HOME}/.local/bin/bin-linux"
+    #"${HOME}/.local/src/nvim https://github.com/DavidVogelxyz/nvim ${HOME}/.local/src/nvim ${HOME}/.config/nvim"
+    #"${HOME}/.local/src/bin-dwm https://github.com/DavidVogelxyz/bin-dwm ${HOME}/.local/src/bin-dwm/bin-dwm ${HOME}/.local/bin/bin-dwm"
+    #"${HOME}/.local/src/bin-proxmox https://github.com/DavidVogelxyz/bin-proxmox ${HOME}/.local/src/bin-proxmox/bin-proxmox ${HOME}/.local/bin/bin-proxmox"
+)
+
+curr_state_of_path() {
+    if ! [[ -e "$1"  ]]; then
+        echo "nonexistent"
+    elif [[ -L "$1" ]]; then
+        echo "symlink"
+    elif [[ -d "$1" ]]; then
+        echo "directory"
+    elif [[ -f "$1" ]]; then
+        echo "file"
+    else
+        echo "unknown" && return 1
+    fi
+}
+
+back_up_path() {
+    local backup="${1##*${HOME}}"
+    local dest_backup="${DIR_BACKUPS}${backup%/*}"
+
+    if ! [[ -d "${dest_backup}" ]]; then
+        mkdir -p "${dest_backup}"
+    fi
+
+    mv "$1" "${dest_backup}"
+}
+
+check_standard_dirs() {
+    for path in "${dirs_to_confirm[@]}"; do
+        local type=$(curr_state_of_path "$path")
+
+        case $type in
+            "directory")
+                echo "[INFO]: Confirmed \`${path}\` is a directory!";;
+            "file" | "symlink")
+                echo "[WARN]: \`${path}\` is a \"${type}\". Backing up and re-creating now."
+                back_up_path "$path"
+                mkdir -p "$path";;
+            "nonexistent")
+                echo "[WARN]: \`${path}\` doesn't exist. Creating now."
+                mkdir -p "$path";;
+            "unknown")
+                echo "[WARN]: \`${path}\` is an unknown filetype. Review manually.";;
+        esac
+    done
+}
+
+check_repos() {
+    while read -r repo_path repo_remote symlink_src symlink_dest; do
+        echo
+
+        # First, check the repos are valid repos (and create them if they're not valid)
+        local type_repo_path=$(curr_state_of_path "$repo_path")
+
+        case $type_repo_path in
+            "directory")
+                cd "$repo_path"
+
+                if $(git rev-parse --is-inside-work-tree > /dev/null 2>&1); then
+                    if $(git ls-remote "$repo_remote" > /dev/null 2>&1); then
+                        echo "[INFO]: Confirmed Git repo \`${repo_path}\` points to the correct remote!"
+                        cd - > /dev/null 2>&1
+                    else
+                        echo "[WARN]: Git repo \`${repo_path}\` does not point to the correct remote. Backing up and cloning the Git repo."
+                        cd - > /dev/null 2>&1
+                        back_up_path "$repo_path"
+                        git clone "$repo_remote" "$repo_path" > /dev/null 2>&1
+                    fi
+                else
+                    echo "[WARN]: \`${repo_path}\` is not a Git repo. Backing up and cloning the Git repo."
+                    cd - > /dev/null 2>&1
+                    back_up_path "$repo_path"
+                    git clone "$repo_remote" "$repo_path" > /dev/null 2>&1
+                fi;;
+            "file" | "symlink")
+                echo "[WARN]: \`${repo_path}\` is a \"${type}\". Backing up and cloning the Git repo."
+                back_up_path "$repo_path"
+                git clone "$repo_remote" "$repo_path" > /dev/null 2>&1;;
+            "nonexistent")
+                echo "[WARN]: Git repo \`${repo_path}\` doesn't exist. Creating now."
+                git clone "$repo_remote" "$repo_path" > /dev/null 2>&1;;
+            "unknown")
+                echo "[WARN]: \`${repo_path}\` is an unknown filetype. Review manually.";;
+        esac
+
+        # Next, check the relevant symlinks (or continue if not applicable)
+        local type_symlink_dest=$(curr_state_of_path "$symlink_dest") \
+            || continue
+
+        case $type_symlink_dest in
+            "symlink")
+                if [[ $(readlink -f "$symlink_dest") == "$symlink_src" ]]; then
+                    echo "[INFO]: Confirmed symlink at \`${symlink_dest}\` points to \`${symlink_src}\`!"
+                else
+                    echo "[WARN]: Symlink \`${symlink_dest}\` does not point to \`${symlink_src}\`. Backing up and re-creating the symlink."
+                    back_up_path "$symlink_dest"
+                    ln -sr "$symlink_src" "$symlink_dest"
+                fi;;
+            "file" | "directory")
+                echo "[WARN]: \`${symlink_dest}\` is a \"${type}\". Backing up and re-creating the symlink."
+                back_up_path "$symlink_dest"
+                ln -sr "$symlink_src" "$symlink_dest";;
+            "nonexistent")
+                echo "[WARN]: Symlink \`${symlink_dest}\` doesn't exist. Creating now."
+                ln -sr "$symlink_src" "$symlink_dest";;
+            "unknown")
+                echo "[WARN]: \`${symlink_dest}\` is an unknown filetype. Review manually.";;
+        esac
+    done < <(printf "%s\n" "${repo_list[@]}")
+}
+
+main() {
+    echo "[INFO]: Checking on the status of \"standard\" directories."
+    echo
+    check_standard_dirs
+    echo
+    echo "[INFO]: Checking on the status of Git repos."
+    check_repos
+}
+
+main
