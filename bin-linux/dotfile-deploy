@@ -6,6 +6,18 @@
 # License:  GPL v3.0
 # Desc:     `dotfile-deploy` is a stateless script for deploying my dotfiles.
 
+# CONFIG FILE:
+# The script has defaults that will work "out-of-the-box"
+# However, to deploy a different set of Git repos, the config file should be used
+# The script will first look for the config file: `~/.config/dotfile-deploy/dotfile-deploy.conf`
+# If that file doesn't exist, the script will look for: `~/dotfile-deploy.conf`
+# `repo_list` is the primary var that should be set in the config file
+# The user can change `repo_list` by appending to it, or setting it to an entirely different array
+# Optionally, `dirs_to_confirm` can also be set
+CONFIG_FILE_NAME="dotfile-deploy.conf"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/dotfile-deploy"
+CONFIG_FILE="${CONFIG_DIR}/${CONFIG_FILE_NAME}"
+
 DATE="$(date +"%Y-%m-%d_%H-%M-%S")"
 DIR_BACKUPS="${HOME}/backup-configs_${DATE}"
 
@@ -29,6 +41,16 @@ repo_list=(
     #"${HOME}/.local/src/bin-dwm https://github.com/DavidVogelxyz/bin-dwm ${HOME}/.local/src/bin-dwm/bin-dwm ${HOME}/.local/bin/bin-dwm"
     #"${HOME}/.local/src/bin-proxmox https://github.com/DavidVogelxyz/bin-proxmox ${HOME}/.local/src/bin-proxmox/bin-proxmox ${HOME}/.local/bin/bin-proxmox"
 )
+
+source_conf() {
+    # If main config file path exists, source it
+    # If main config file path does NOT exist, check user's home directory
+    if [[ -f "$CONFIG_FILE" ]]; then
+        source "$CONFIG_FILE"
+    elif [[ -f "${HOME}/${CONFIG_FILE_NAME}" ]]; then
+        source "${HOME}/${CONFIG_FILE_NAME}"
+    fi
+}
 
 curr_state_of_path() {
     if ! [[ -e "$1"  ]]; then
@@ -140,6 +162,7 @@ check_repos() {
 }
 
 main() {
+    source_conf
     echo "[INFO]: Checking on the status of \"standard\" directories."
     echo
     check_standard_dirs
