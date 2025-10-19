@@ -15,7 +15,7 @@
 # Optionally, `PREF_SESH` can also be set
 CONFIG_FILE_NAME="dev-tmux.conf"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/dev-tmux"
-CONFIG_FILE="$CONFIG_DIR/$CONFIG_FILE_NAME"
+CONFIG_FILE="${CONFIG_DIR}/${CONFIG_FILE_NAME}"
 
 # `PREF_SESH` will be the open session when `dev-tmux` returns
 PREF_SESH="homedir"
@@ -30,24 +30,22 @@ SESH=(
 
 source_conf() {
     # If main config file path exists, source it
+    # If main config file path does NOT exist, check user's home directory
     if [[ -f "$CONFIG_FILE" ]]; then
         source "$CONFIG_FILE"
-    fi
-
-    # If main config file path does NOT exists
-    # Then, check for alternate path
-    if [[ ! -f "$CONFIG_FILE" ]]; then
-        if [[ -f "$CONFIG_FILE_NAME" ]]; then
-            source "$CONFIG_FILE_NAME"
-        fi
+    elif [[ -f "${HOME}/${CONFIG_FILE_NAME}" ]]; then
+        source "${HOME}/${CONFIG_FILE_NAME}"
     fi
 }
 
 # NOTE: the `sleep 1` is crucial for preserving the order of the sessions
 dt_loop() {
+    local total=${#SESH[@]}
+    local n=0
+
     for s in "${SESH[@]}"; do
-        s_name="${s%%:*}"
-        s_path="${s##*:}"
+        local s_name="${s%%:*}"
+        local s_path="${s##*:}"
         ((++n))
 
         echo "[INFO]: Creating session ${n}/${total} - \"$s_name\"."
@@ -58,12 +56,7 @@ dt_loop() {
 
 main() {
     source_conf
-
-    total=${#SESH[@]}
-    n=0
-
     dt_loop
-
     echo "[INFO]: Attaching to \"${PREF_SESH}\"."
     tmux a -t ${PREF_SESH}
 }
