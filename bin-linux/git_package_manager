@@ -7,7 +7,7 @@
 # Desc:     `git_package_manager` makes managing Git repos easy
 
 SRC_DIR="${HOME}/.local/src"
-PULL_CHECK="Already up to date."
+MSG_REPO_UP_TO_DATE="Already up to date."
 
 git_mgmt() {
     if ! [[ -d .git ]]; then
@@ -18,28 +18,31 @@ git_mgmt() {
     echo "[INFO]: Attempting to update \"$dir\"."
 
     git fetch > /dev/null 2>&1
+    local EXIT_CODE="$?"
 
-    if [[ "$?" == 128 ]]; then
+    if [[ "$EXIT_CODE" == 128 ]]; then
         repos_bad_fetch+=("$dir")
         return 0
     fi
 
+    # cannot use `local OUTPUT`, or `$EXIT_CODE` always equals `0`
     OUTPUT=$(git pull 2>/dev/null)
+    EXIT_CODE="$?"
 
-    if [[ "$?" == 1 ]]; then
+    if [[ "$EXIT_CODE" == 1 ]]; then
         repos_no_branch+=("$dir")
         return 0
-    elif [[ "$?" == 128 ]]; then
+    elif [[ "$EXIT_CODE" == 128 ]]; then
         repos_bad_pull+=("$dir")
         return 0
     fi
 
-    if [[ "$OUTPUT" == "$PULL_CHECK" ]]; then
+    if [[ "$OUTPUT" == "$MSG_REPO_UP_TO_DATE" ]]; then
         repos_no_change+=("$dir")
         return 0
     fi
 
-    if ! [[ "$OUTPUT" == "$PULL_CHECK" ]]; then
+    if ! [[ "$OUTPUT" == "$MSG_REPO_UP_TO_DATE" ]]; then
         repos_updated+=("$dir")
     fi
 }
