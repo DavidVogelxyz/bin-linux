@@ -18,14 +18,14 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/dev-tmux"
 CONFIG_FILE="${CONFIG_DIR}/${CONFIG_FILE_NAME}"
 
 # `PREF_SESH` will be the open session when `dev-tmux` returns
-PREF_SESH="homedir"
+PREF_SESH="scratch"
 
 # `SESH` is an array of sessions to open
 # The format is `"<NAME>:<PATH>"`
 # Note that the list's order is preserved
 SESH=(
+    "homedir:${HOME}"
     "${PREF_SESH}:${HOME}"
-    "scratch:${HOME}"
 )
 
 source_conf() {
