@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+
+# Name:     ansible_encrypt
+# Author:   David Vogel <david@davidvogel.xyz>
+# Date:     2025 Oct 22, Wed
+# License:  GPL v3.0
+# Desc:     `ansible_encrypt` encrypts/decrypts Ansible data, without Ansible-added newlines.
+
+# Takes message in as argument, prints to STDERR, and exits with return code `1`.
+error() {
+    echo "$1" >&2 \
+        && exit 1
+}
+
+# Takes message in as argument and prints to STDERR.
+warn() {
+    echo "$1" >&2
+}
+
+usage() {
+    cat << EOF
+
+Usage: ansible_encrypt [-h] [-p VAULT_PASS_FILE] [-s SALT] {decrypt,encrypt} <FILE>
+
+Script for encrypting/decrypting Ansible data, without Ansible-added newlines.
+
+positional arguments:
+    decrypt             Decrypt the "INPUT_FILE"
+    encrypt             Encrypt the "INPUT_FILE"
+    FILE                Input file to encrypt/decrypt
+
+options:
+    -h                  Show this help message, then exit
+    -p                  The Ansible \`vault-pass-file\` - ALWAYS REQUIRED
+    -s                  The Ansible encryption salt - required only when encrypting
+
+A valid encryption command will look like:
+    ansible_encrypt -p <VAULT_PASS_FILE> -s <SALT> encrypt <FILE>
+
+A valid decryption command will look like:
+    ansible_encrypt -p <VAULT_PASS_FILE> decrypt <FILE>
+
+Note: This script requires Ansible v2.15, in order to take advantage of the static salt functionality.
+- Older version of Ansible will still perform encryption/decryption.
+- However, since the salt is not static, the same file will produce different hashes.
+
+EOF
+}
+
+check_for_ansible() {
+    if ! [[ "$(command -v ansible)" ]]; then
+        error "[ERROR]: Ansible does not appear to be installed. Exiting now."
+    fi
+}
+
+check_input_file() {
+    # Confirm that a file was passed to the script.
+    if [[ -z "$INPUT_FILE" ]]; then
+        error "[ERROR]: An input file must be provided. Exiting now."
+    elif ! [[ -f "$INPUT_FILE" ]]; then
+        error "[ERROR]: \`$INPUT_FILE\` is not a file. Exiting now."
+    fi
+}
+
+check_pass_file() {
+    if [[ -z "$VAULT_PASS_FILE" ]]; then
+        error "[ERROR]: A password file must be provided to encrypt/decrypt. Exiting now."
+    fi
+}
+
+check_salt() {
+    if [[ "$MODE" == "encrypt" ]] && [[ -z "$SALT" ]]; then
+        error "[ERROR]: A value for the \"salt\" must be provided to encrypt/decrypt. Exiting now."
+    fi
+}
+
+debug_block() {
+    cat << EOF
+[INFO]: Mode = $MODE
+[INFO]: Input file = $INPUT_FILE
+[INFO]: Password file = $VAULT_PASS_FILE
+EOF
+    if [[ "$MODE" == "encrypt" ]]; then echo "[INFO]: Salt = $SALT"; fi
+    echo
+}
+
+preflight_checks() {
+    check_input_file
+    check_pass_file
+    check_salt
+    #debug_block
+}
+
+encrypt() {
+    OUTPUT="$(printf "%s" "$(cat "$INPUT_FILE")" \
+        | ANSIBLE_VAULT_ENCRYPT_SALT="$SALT" \
+        ansible-vault encrypt_string --vault-pass-file "$VAULT_PASS_FILE" \
+        2> /dev/null)"
+
+    local EXIT_CODE="$?"
+
+    if ! [[ "$EXIT_CODE" == 0 ]]; then
+        error "[ERROR]: This file appears to already be encrypted. Exiting now."
+    fi
+
+    ENCRYPTED=()
+
+    # Remove the non-essential components from the output
+    while read -r line; do
+        if [[ "$line" == !* ]]; then
+            continue
+        fi
+
+        ENCRYPTED+=("$line")
+    done <<< "$OUTPUT"
+
+    # Overwrite the input file with the encrypted output
+    printf "%s\n" "${ENCRYPTED[@]}" > "$INPUT_FILE"
+}
+
+decrypt() {
+    ansible-vault decrypt --vault-pass-file "$VAULT_PASS_FILE" "$INPUT_FILE" \
+        > /dev/null 2>&1
+
+    local EXIT_CODE="$?"
+
+    if ! [[ "$EXIT_CODE" == 0 ]]; then
+        error "[ERROR]: This file appears to already be decrypted. Exiting now."
+    fi
+}
+
+main() {
+    check_for_ansible
+
+    while getopts "hp:s:" opt; do
+        case "$opt" in
+            h)
+                usage
+                exit 0;;
+            p)
+                if ! [[ -f "$OPTARG" ]]; then
+                    error "[ERROR]: \`$OPTARG\` is not a file. Exiting now."
+                fi
+
+                VAULT_PASS_FILE="$OPTARG"
+                ;;
+            s)
+                if [[ "$1" == "encrypt" ]] && [[ -z "$OPTARG" ]]; then
+                    error "[ERROR]: To encrypt the file, the salt must be a valid string. Exiting now."
+                fi
+
+                SALT="$OPTARG"
+                ;;
+            *)
+                usage >&2
+                exit 1;;
+        esac
+    done
+
+    # Shifts the arguments such that `$1` represents the first argument after options
+    shift $((OPTIND - 1))
+
+    MODE="$1"
+    INPUT_FILE="$2"
+
+    if [[ -z "$MODE" ]]; then
+        usage >&2
+        exit 1
+    fi
+
+    case "$MODE" in
+        encrypt)
+            preflight_checks
+            encrypt
+            echo "[INFO]: \`$INPUT_FILE\` was successfully encrypted!";;
+        decrypt)
+            preflight_checks
+            decrypt
+            echo "[INFO]: \`$INPUT_FILE\` was successfully decrypted!";;
+        *)
+            error "[ERROR]: Unsure whether to encrypt or decrypt. Exiting now.";;
+    esac
+}
+
+main "$@"
