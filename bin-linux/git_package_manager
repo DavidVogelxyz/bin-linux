@@ -65,50 +65,43 @@ gpm-loop() {
 
 gpm-results() {
     if ! [[ "${#not_dirs[@]}" == 0 ]]; then
-        echo
-        echo "[INFO]: The following objects are not directories:"
+        echo -e "\n[INFO]: The following objects are not directories:"
 
         printf -- "- %s\n" "${not_dirs[@]}"
     fi
 
     if ! [[ "${#dirs_not_repos[@]}" == 0 ]]; then
-        echo
-        echo "[INFO]: The following directories are not Git repos:"
+        echo -e "\n[INFO]: The following directories are not Git repos:"
 
         printf -- "- %s\n" "${dirs_not_repos[@]}"
     fi
 
     if ! [[ "${#repos_no_change[@]}" == 0 ]]; then
-        echo
-        echo "[INFO]: The following Git repos were already up-to-date:"
+        echo -e "\n[INFO]: The following Git repos were already up-to-date:"
 
         printf -- "- %s\n" "${repos_no_change[@]}"
     fi
 
     if ! [[ "${#repos_updated[@]}" == 0 ]]; then
-        echo
-        echo "[INFO]: The following Git repos were updated successfully:"
+        echo -e "\n[INFO]: The following Git repos were updated successfully:"
 
         printf -- "- %s\n" "${repos_updated[@]}"
     fi
 
     if ! [[ "${#repos_no_branch[@]}" == 0 ]]; then
-        echo
-        echo "[INFO]: The following Git repos were updated without changing HEAD:"
+        echo -e "\n[INFO]: The following Git repos were fetched without changing HEAD:"
 
         printf -- "- %s\n" "${repos_no_branch[@]}"
     fi
 
     if ! [[ "${#repos_bad_fetch[@]}" == 0 ]]; then
-        echo
-        echo "[WARN]: The following Git repos did not fetch cleanly:"
+        echo -e "\n[WARN]: The following Git repos did not fetch cleanly:"
 
         printf -- "- %s\n" "${repos_bad_fetch[@]}"
     fi
 
     if ! [[ "${#repos_bad_pull[@]}" == 0 ]]; then
-        echo
-        echo "[WARN]: The following Git repos did not pull cleanly:"
+        echo -e "\n[WARN]: The following Git repos did not pull cleanly:"
 
         printf -- "- %s\n" "${repos_bad_pull[@]}"
     fi
