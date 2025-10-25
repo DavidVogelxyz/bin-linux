@@ -55,10 +55,9 @@ check_for_ansible() {
 
 check_input_file() {
     # Confirm that a file was passed to the script.
-    if [[ -z "$INPUT_FILE" ]]; then
-        error "[ERROR]: An input file must be provided. Exiting now."
-    elif ! [[ -f "$INPUT_FILE" ]]; then
-        error "[ERROR]: \`$INPUT_FILE\` is not a file. Exiting now."
+    if ! [[ -f "$INPUT_FILE" ]]; then
+        echo "[WARN]: Skipping \`$INPUT_FILE\`, as it is not a file."
+        return 1
     fi
 }
 
@@ -77,7 +76,6 @@ check_salt() {
 debug_block() {
     cat << EOF
 [INFO]: Mode = $MODE
-[INFO]: Input file = $INPUT_FILE
 [INFO]: Password file = $VAULT_PASS_FILE
 EOF
     if [[ "$MODE" == "encrypt" ]]; then echo "[INFO]: Salt = $SALT"; fi
@@ -85,7 +83,6 @@ EOF
 }
 
 preflight_checks() {
-    check_input_file
     check_pass_file
     check_salt
     #debug_block
@@ -100,7 +97,8 @@ encrypt() {
     local EXIT_CODE="$?"
 
     if ! [[ "$EXIT_CODE" == 0 ]]; then
-        error "[ERROR]: This file appears to already be encrypted. Exiting now."
+        echo "[WARN]: Skipping \`$INPUT_FILE\`, as it appears to already be encrypted."
+        return 1
     fi
 
     ENCRYPTED=()
@@ -125,7 +123,8 @@ decrypt() {
     local EXIT_CODE="$?"
 
     if ! [[ "$EXIT_CODE" == 0 ]]; then
-        error "[ERROR]: This file appears to already be decrypted. Exiting now."
+        echo "[WARN]: Skipping \`$INPUT_FILE\`, as it appears to already be decrypted."
+        return 1
     fi
 }
 
@@ -161,7 +160,6 @@ main() {
     shift $((OPTIND - 1))
 
     MODE="$1"
-    INPUT_FILE="$2"
 
     if [[ -z "$MODE" ]]; then
         usage >&2
@@ -169,16 +167,20 @@ main() {
     fi
 
     case "$MODE" in
-        encrypt)
+        encrypt|decrypt)
             preflight_checks
-            encrypt
-            echo "[INFO]: \`$INPUT_FILE\` was successfully encrypted!";;
-        decrypt)
-            preflight_checks
-            decrypt
-            echo "[INFO]: \`$INPUT_FILE\` was successfully decrypted!";;
+
+            # Shift again, so that `$@` only contains potential files
+            shift
+
+            for arg in "$@"; do
+                INPUT_FILE="$arg"
+                check_input_file || continue
+                "$MODE" || continue
+                echo "[INFO]: \`$INPUT_FILE\` was successfully ${MODE}ed!"
+            done;;
         *)
-            error "[ERROR]: Unsure whether to encrypt or decrypt. Exiting now.";;
+            error "[ERROR]: \"$MODE\" must be either \"encrypt\" or \"decrypt\". Exiting now.";;
     esac
 }
 
