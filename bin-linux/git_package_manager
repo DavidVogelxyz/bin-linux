@@ -108,6 +108,10 @@ gpm-results() {
 }
 
 main() {
+    if ! [[ "$(command -v git)" ]]; then
+        error "[ERROR]: Git does not appear to be installed. Exiting now."
+    fi
+
     not_dirs=()
     dirs_not_repos=()
     repos_bad_fetch=()

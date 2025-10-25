@@ -89,6 +89,10 @@ gcd-results() {
 }
 
 main() {
+    if ! [[ "$(command -v git)" ]]; then
+        error "[ERROR]: Git does not appear to be installed. Exiting now."
+    fi
+
     check-git-repo
 
     gcd-loop
