@@ -8,7 +8,7 @@
 
 count=0
 
-check-git-repo() {
+check_git_repo() {
     git status > /dev/null 2>&1
 
     if [[ $? == 128 ]]; then
@@ -17,7 +17,7 @@ check-git-repo() {
     fi
 }
 
-gcd-loop() {
+gcd_loop() {
     echo "[INFO]: Performing the loop..."
 
     while read -r line; do
@@ -38,9 +38,7 @@ gcd-loop() {
                     echo "[WARN]: ${commithash}: \"$authorname\" vs \"$commitauthorname\""
                     count+=1
                     hash_oldest_disagreement="$commithash"
-                fi;
-
-                continue;;
+                fi;;
             CommitDate*)
                 local committerdate="${line##*: }";
 
@@ -49,21 +47,18 @@ gcd-loop() {
                     echo "[WARN]: ${commithash}: \"$authordate\" vs \"$committerdate\""
                     count+=1
                     hash_oldest_disagreement="$commithash"
-                fi;
-
-                continue;;
+                fi;;
             *)
                 continue;;
         esac
     done < <(git log --pretty=fuller | grep -A 4 "^commit")
 }
 
-gcd-results() {
+gcd_results() {
     echo "[INFO]: Comparison complete."
 
     if (( count == 0 )); then
-        echo
-        echo "[INFO]: No disagreements detected!"
+        echo -e "\n[INFO]: No disagreements detected!"
     fi
 
     if ! (( count == 0 )); then
@@ -83,8 +78,7 @@ gcd-results() {
             fi
         done < <(git log --oneline | grep -i -A 1 "^${hash_oldest_disagreement}")
 
-        echo
-        echo "[INFO]: To address all discrepancies, rebase from commit ${hash_rebase@U}"
+        echo -e "\n[INFO]: To address all discrepancies, rebase from commit ${hash_rebase@U}"
     fi
 }
 
@@ -93,11 +87,9 @@ main() {
         error "[ERROR]: Git does not appear to be installed. Exiting now."
     fi
 
-    check-git-repo
-
-    gcd-loop
-
-    gcd-results
+    check_git_repo
+    gcd_loop
+    gcd_results
 }
 
 main
