@@ -47,7 +47,7 @@ git_mgmt() {
     fi
 }
 
-gpm-loop() {
+gpm_loop() {
     for dir in *; do
         if ! [[ -d $dir ]]; then
             not_dirs+=("$dir")
@@ -63,7 +63,7 @@ gpm-loop() {
     done
 }
 
-gpm-results() {
+gpm_results() {
     if ! [[ "${#not_dirs[@]}" == 0 ]]; then
         echo -e "\n[INFO]: The following objects are not directories:"
 
@@ -121,10 +121,8 @@ main() {
     repos_updated=()
 
     cd $SRC_DIR
-
-    gpm-loop
-
-    gpm-results
+    gpm_loop
+    gpm_results
 }
 
 main
