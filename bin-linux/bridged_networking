@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# Name:     bridged_networking
+# Author:   David Vogel <david@davidvogel.xyz>
+# Date:     2025 Dec 6, Sat
+# License:  GPL v3.0
+# Desc:     `bridged_networking` quickly fixes bridged networking setups.
+
+interfaces=()
+bridges=()
+
+get_net_info() {
+    while read -r line; do
+        if [[ "$line" =~ "eth"[0-9]: ]] && [[ "$line" =~ "state UP" ]] && ! [[ "$line" =~ "br" ]]; then
+            # Remove the excess on the right
+            local interface="${line%: *}"
+
+            # Remove the excess on the left
+            interface="${interface##*: }"
+
+            # Add the interface to the `interfaces` array
+            interfaces+=("$interface")
+        elif [[ "$line" =~ "br"[0-9]: ]]; then
+            # Remove the excess on the right
+            local bridge="${line%: *}"
+
+            # Remove the excess on the left
+            bridge="${bridge##*: }"
+
+            # Add the bridge to the `bridges` array
+            bridges+=("$bridge")
+        fi
+    done < <(ip a)
+}
+
+enable_bridge() {
+    if [[ "${#interfaces[@]}" == 1 ]] && [[ "${#bridges[@]}" == 1 ]]; then
+        sudo brctl addif ${bridges[0]} ${interfaces[0]}
+        sudo ip link set ${bridges[0]} up
+        echo "[INFO]: Enabled bridge ${bridges[0]} on interface ${interfaces[0]}!"
+    else
+        echo "[ERROR]: Found wrong number of bridges (${bridges[@]}) or interfaces (${interfaces[@]})."
+        exit 1
+    fi
+}
+
+main () {
+    # Get the Ethernet interface and the bridge
+    get_net_info
+
+    # Enable the bridge for the Ethernet interface
+    enable_bridge
+}
+
+main
