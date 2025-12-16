@@ -25,7 +25,7 @@ gcd_loop() {
             commit*)
                 local commithash="${line##* }";
                 commithash="${commithash:0:7}";
-                commithash="${commithash@U}";;
+                ;;
             Author:*)
                 local authorname="${line##*:     }";;
             AuthorDate*)
@@ -73,12 +73,18 @@ gcd_results() {
 
             # Grab the hash of the previous commit
             if (( idx == 2 )); then
-                hash_rebase="${line%% *}"
-                break
+                local hash_rebase="${line%% *}"
             fi
         done < <(git log --oneline | grep -i -A 1 "^${hash_oldest_disagreement}")
 
-        echo -e "\n[INFO]: To address all discrepancies, rebase from commit ${hash_rebase@U}"
+        # If `hash_rebase` is unset, it should be the "root" commit
+        if ! [[ "$hash_rebase" ]]; then
+            local hash_rebase="the root commit."
+        else
+            hash_rebase="commit $hash_rebase"
+        fi
+
+        echo -e "\n[INFO]: To address all discrepancies, rebase from ${hash_rebase}"
     fi
 }
 
