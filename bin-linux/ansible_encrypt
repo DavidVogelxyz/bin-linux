@@ -144,7 +144,7 @@ main() {
                 VAULT_PASS_FILE="$OPTARG"
                 ;;
             s)
-                if [[ "$1" == "encrypt" ]] && [[ -z "$OPTARG" ]]; then
+                if [[ -z "$OPTARG" ]] || [[ "$OPTARG" =~ ^- ]] ; then
                     error "[ERROR]: To encrypt the file, the salt must be a valid string. Exiting now."
                 fi
 
