@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+
+# Name:     daily-note
+# Author:   David Vogel <david@davidvogel.xyz>
+# Date:     2025 Jun 29, Sun
+# License:  GPL v3.0
+# Desc:     `daily-note` creates daily notefiles with proper formatting
+
+# CONFIG FILE:
+# The script has defaults that will work "out-of-the-box"
+# However, to create notes to a different directory, the config file should be used
+# The script will first look for the config file: `~/.config/daily-note/daily-note.conf`
+# If that file doesn't exist, the script will look for: `~/daily-note.conf`
+# `DIR_NOTES` is the primary var that should be set in the config file
+CONFIG_FILE_NAME="daily-note.conf"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/daily-note"
+CONFIG_FILE="${CONFIG_DIR}/${CONFIG_FILE_NAME}"
+
+# `DIR_NOTES` is the directory into which all subdirectories and files will be created
+# Example: by default, a note for 2025 Jun 29 will be created at:
+#       ${HOME}/notes/2025/06_june/2025-06-29_tasks-for-sunday.md
+DIR_NOTES="${HOME}/notes"
+
+source_conf() {
+    # If main config file path exists, source it
+    # If main config file path does NOT exist, check user's home directory
+    if [[ -f "$CONFIG_FILE" ]]; then
+        source "$CONFIG_FILE"
+    elif [[ -f "${HOME}/${CONFIG_FILE_NAME}" ]]; then
+        source "${HOME}/${CONFIG_FILE_NAME}"
+    fi
+}
+
+# if date was specified, use that date; if not, use today's date
+get_working_date() {
+    if ! [[ -z "$*" ]]; then
+        working_date=($(date -d "$*" +"%Y %m %d %B %A"))
+        return 0
+    fi
+
+    echo "[INFO]: No arguments passed. Assuming you want today's file."
+    working_date=($(date +"%Y %m %d %B %A"))
+}
+
+generate_vars() {
+    # year as "2025"
+    y="${working_date[0]}"
+
+    # month as "06"
+    m_num="${working_date[1]}"
+
+    # day as "29"
+    d_num="${working_date[2]}"
+
+    # month as "June"; then, month as "june"
+    m_name="${working_date[3]}"
+    m_name_lower="${m_name@L}"
+
+    # day as "Sunday"; then, day as "sunday"
+    d_name="${working_date[4]}"
+    d_name_lower="${d_name@L}"
+
+    # get dir structure within `$DIR_NOTES`; then, get filename of note
+    notedir="${y}/${m_num}_${m_name_lower}"
+    local notefile="${y}-${m_num}-${d_num}_tasks-for-${d_name_lower}.md"
+
+    # filepath of note
+    notepath="${DIR_NOTES}/${notedir}/${notefile}"
+}
+
+check_file_and_dir() {
+    # HARD CHECK  - if the file already exists, the script exits
+    if [[ -f "$notepath" ]]; then
+        echo "[INFO]: File already exists. Nothing to do."
+        exit 0
+    fi
+
+    # SOFT CHECK - create the directory if it does not already exist
+    if ! [[ -d "${DIR_NOTES}/${notedir}" ]]; then
+        mkdir -pv "${DIR_NOTES}/${notedir}"
+    fi
+}
+
+add_line() {
+    echo "$1" >> "$notepath"
+}
+
+get_padded_line() {
+    printf "%*s\n" "${#1}"
+}
+
+add_line_with_newline() {
+    echo -e "${1}\n" >> "$notepath"
+}
+
+# creates the note file
+create_note() {
+    # remove any leading zeroes from the date numeral
+    d_num="$((10#$d_num))"
+
+    # Add title to note
+    local title="Tasks for $y $m_name $d_num, $d_name"
+    add_line "$title"
+
+    # Add line of "=" underneath title
+    local pad_title="$(get_padded_line "$title")"
+    pad_title="${pad_title// /=}"
+    add_line_with_newline "$pad_title"
+
+    # Add "date added" to note
+    add_line_with_newline "Date added: $y $m_name $d_num, $d_name"
+
+    # Add "Notes" subtitle to note
+    local subtitle="Notes"
+    add_line "$subtitle"
+
+    # Add line of "-" underneath subtitle
+    local pad_subtitle="$(get_padded_line "$subtitle")"
+    pad_subtitle="${pad_subtitle// /-}"
+    add_line_with_newline "$pad_subtitle"
+
+    # Add "Completed tasks" subtitle to note
+    subtitle="Completed tasks"
+    add_line "$subtitle"
+
+    # Add line of "-" underneath subtitle
+    pad_subtitle="$(get_padded_line "$subtitle")"
+    pad_subtitle="${pad_subtitle// /-}"
+    add_line_with_newline "$pad_subtitle"
+
+    # Add "Done" section to note
+    add_line "Done:"
+}
+
+main() {
+    source_conf
+    get_working_date $*
+    generate_vars
+    check_file_and_dir
+    create_note
+
+    echo "[INFO]: File created!"
+}
+
+main $*
