@@ -6,29 +6,42 @@
 # License:  GPL v3.0
 # Desc:     `daily-note` creates daily notefiles with proper formatting
 
-# CONFIG FILE:
-# The script has defaults that will work "out-of-the-box"
-# However, to create notes to a different directory, the config file should be used
-# The script will first look for the config file: `~/.config/daily-note/daily-note.conf`
-# If that file doesn't exist, the script will look for: `~/daily-note.conf`
-# `DIR_NOTES` is the primary var that should be set in the config file
-CONFIG_FILE_NAME="daily-note.conf"
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/daily-note"
-CONFIG_FILE="${CONFIG_DIR}/${CONFIG_FILE_NAME}"
+SCRIPT_NAME="daily-note"
 
-# `DIR_NOTES` is the directory into which all subdirectories and files will be created
+# `DIR_NOTES` is the dir into which all subdirs and files will be created
 # Example: by default, a note for 2025 Jun 29 will be created at:
 #       ${HOME}/notes/2025/06_june/2025-06-29_tasks-for-sunday.md
 DIR_NOTES="${HOME}/notes"
 
+# CONFIG FILE:
+# The script has defaults that will work "out-of-the-box"
+# To change settings, use the config file instead of editing the script
+# The config file should be named:
+#       daily-note.conf
+# The config file should be located at any of the following paths:
+#       ${HOME}/.config/bin-linux/daily-note/daily-note.conf
+#       ${HOME}/.config/bin-linux/daily-note.conf
+#       ${HOME}/.config/daily-note/daily-note.conf
+#       ${HOME}/.config/daily-note.conf
+#       ${HOME}/daily-note.conf
 source_conf() {
-    # If main config file path exists, source it
-    # If main config file path does NOT exist, check user's home directory
-    if [[ -f "$CONFIG_FILE" ]]; then
-        source "$CONFIG_FILE"
-    elif [[ -f "${HOME}/${CONFIG_FILE_NAME}" ]]; then
-        source "${HOME}/${CONFIG_FILE_NAME}"
+    CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+    if [[ -f "${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}/${SCRIPT_NAME}.conf"
+    elif [[ -f "${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}.conf"
+    elif [[ -f "${CONFIG_DIR}/${SCRIPT_NAME}/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${CONFIG_DIR}/${SCRIPT_NAME}/${SCRIPT_NAME}.conf"
+    elif [[ -f "${CONFIG_DIR}/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${CONFIG_DIR}/${SCRIPT_NAME}.conf"
+    elif [[ -f "${HOME}/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${HOME}/${SCRIPT_NAME}.conf"
+    else
+        return 0
     fi
+
+    source "$CONFIG_FILE"
 }
 
 # if date was specified, use that date; if not, use today's date

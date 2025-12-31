@@ -1,14 +1,10 @@
 #!/usr/bin/env bash
 
-CONFIG_FILE_NAME="tmux-sessionizer.conf"
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tmux-sessionizer"
-CONFIG_FILE="$CONFIG_DIR/$CONFIG_FILE_NAME"
+SCRIPT_NAME="tmux-sessionizer"
+
 PANE_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/tmux-sessionizer"
 PANE_CACHE_FILE="$PANE_CACHE_DIR/panes.cache"
 
-# config file example
-# ------------------------
-# # file: ~/.config/tmux-sessionizer/tmux-sessionizer.conf
 # # If set this override the default TS_SEARCH_PATHS (~/ ~/personal ~/personal/dev/env/.config)
 # TS_SEARCH_PATHS=(~/)
 # # If set this add additional search paths to the default TS_SEARCH_PATHS
@@ -30,15 +26,39 @@ PANE_CACHE_FILE="$PANE_CACHE_DIR/panes.cache"
 #
 # TS_LOG=true # will write logs to ~/.local/share/tmux-sessionizer/tmux-sessionizer.logs
 # TS_LOG_FILE=<file> # will write logs to <file> Defaults to ~/.local/share/tmux-sessionizer/tmux-sessionizer.logs
-# ------------------------
 
-if [[ -f "$CONFIG_FILE" ]]; then
+# CONFIG FILE:
+# The script has defaults that will work "out-of-the-box"
+# To change settings, use the config file instead of editing the script
+# The config file should be named:
+#       tmux-sessionizer.conf
+# The config file should be located at any of the following paths:
+#       ${HOME}/.config/bin-linux/tmux-sessionizer/tmux-sessionizer.conf
+#       ${HOME}/.config/bin-linux/tmux-sessionizer.conf
+#       ${HOME}/.config/tmux-sessionizer/tmux-sessionizer.conf
+#       ${HOME}/.config/tmux-sessionizer.conf
+#       ${HOME}/tmux-sessionizer.conf
+source_conf() {
+    CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+    if [[ -f "${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}/${SCRIPT_NAME}.conf"
+    elif [[ -f "${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}.conf"
+    elif [[ -f "${CONFIG_DIR}/${SCRIPT_NAME}/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${CONFIG_DIR}/${SCRIPT_NAME}/${SCRIPT_NAME}.conf"
+    elif [[ -f "${CONFIG_DIR}/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${CONFIG_DIR}/${SCRIPT_NAME}.conf"
+    elif [[ -f "${HOME}/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${HOME}/${SCRIPT_NAME}.conf"
+    else
+        return 0
+    fi
+
     source "$CONFIG_FILE"
-fi
+}
 
-if [[ -f "$CONFIG_FILE_NAME" ]]; then
-    source "$CONFIG_FILE_NAME"
-fi
+source_conf
 
 if [[ $TS_LOG != "true" ]]; then
     if [[ -z $TS_LOG_FILE ]]; then

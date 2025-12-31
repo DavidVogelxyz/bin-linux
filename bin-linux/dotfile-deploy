@@ -6,22 +6,12 @@
 # License:  GPL v3.0
 # Desc:     `dotfile-deploy` is a stateless script for deploying my dotfiles.
 
-# CONFIG FILE:
-# The script has defaults that will work "out-of-the-box"
-# However, to deploy a different set of Git repos, the config file should be used
-# The script will first look for the config file: `~/.config/dotfile-deploy/dotfile-deploy.conf`
-# If that file doesn't exist, the script will look for: `~/dotfile-deploy.conf`
-# `repo_list` is the primary var that should be set in the config file
-# The user can change `repo_list` by appending to it, or setting it to an entirely different array
-# Optionally, `dirs_to_confirm` can also be set
-CONFIG_FILE_NAME="dotfile-deploy.conf"
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/dotfile-deploy"
-CONFIG_FILE="${CONFIG_DIR}/${CONFIG_FILE_NAME}"
+SCRIPT_NAME="dotfile-deploy"
 
 DATE="$(date +"%Y-%m-%d_%H-%M-%S")"
 DIR_BACKUPS="${HOME}/backup-configs_${DATE}"
 
-dirs_to_confirm=(
+DIRS_TO_CONFIRM=(
     "${HOME}/.cache"
     "${HOME}/.config"
     "${HOME}/.local"
@@ -31,9 +21,9 @@ dirs_to_confirm=(
     "${HOME}/.local/state"
 )
 
-# The format of lines in `$repo_list` is:
+# The format of lines in `REPO_LIST` is:
 # "PATH REMOTE SYMLINK_SRC SYMLINK_DEST"
-repo_list=(
+REPO_LIST=(
     "${HOME}/.dotfiles https://github.com/DavidVogelxyz/dotfiles ${HOME}/.dotfiles ${HOME}/.local/src/dotfiles"
     "${HOME}/.local/src/vim https://github.com/DavidVogelxyz/vim ${HOME}/.local/src/vim ${HOME}/.vim"
     "${HOME}/.local/src/bin-linux https://github.com/DavidVogelxyz/bin-linux ${HOME}/.local/src/bin-linux/bin-linux ${HOME}/.local/bin/bin-linux"
@@ -42,14 +32,35 @@ repo_list=(
     #"${HOME}/.local/src/bin-proxmox https://github.com/DavidVogelxyz/bin-proxmox ${HOME}/.local/src/bin-proxmox/bin-proxmox ${HOME}/.local/bin/bin-proxmox"
 )
 
+# CONFIG FILE:
+# The script has defaults that will work "out-of-the-box"
+# To change settings, use the config file instead of editing the script
+# The config file should be named:
+#       dotfile-deploy.conf
+# The config file should be located at any of the following paths:
+#       ${HOME}/.config/bin-linux/dotfile-deploy/dotfile-deploy.conf
+#       ${HOME}/.config/bin-linux/dotfile-deploy.conf
+#       ${HOME}/.config/dotfile-deploy/dotfile-deploy.conf
+#       ${HOME}/.config/dotfile-deploy.conf
+#       ${HOME}/dotfile-deploy.conf
 source_conf() {
-    # If main config file path exists, source it
-    # If main config file path does NOT exist, check user's home directory
-    if [[ -f "$CONFIG_FILE" ]]; then
-        source "$CONFIG_FILE"
-    elif [[ -f "${HOME}/${CONFIG_FILE_NAME}" ]]; then
-        source "${HOME}/${CONFIG_FILE_NAME}"
+    CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+    if [[ -f "${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}/${SCRIPT_NAME}.conf"
+    elif [[ -f "${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}.conf"
+    elif [[ -f "${CONFIG_DIR}/${SCRIPT_NAME}/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${CONFIG_DIR}/${SCRIPT_NAME}/${SCRIPT_NAME}.conf"
+    elif [[ -f "${CONFIG_DIR}/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${CONFIG_DIR}/${SCRIPT_NAME}.conf"
+    elif [[ -f "${HOME}/${SCRIPT_NAME}.conf" ]]; then
+        CONFIG_FILE="${HOME}/${SCRIPT_NAME}.conf"
+    else
+        return 0
     fi
+
+    source "$CONFIG_FILE"
 }
 
 curr_state_of_path() {
@@ -78,7 +89,7 @@ back_up_path() {
 }
 
 check_standard_dirs() {
-    for path in "${dirs_to_confirm[@]}"; do
+    for path in "${DIRS_TO_CONFIRM[@]}"; do
         local type=$(curr_state_of_path "$path")
 
         case $type in
@@ -158,16 +169,14 @@ check_repos() {
             "unknown")
                 echo "[WARN]: \`${symlink_dest}\` is an unknown filetype. Review manually.";;
         esac
-    done < <(printf "%s\n" "${repo_list[@]}")
+    done < <(printf "%s\n" "${REPO_LIST[@]}")
 }
 
 main() {
     source_conf
-    echo "[INFO]: Checking on the status of \"standard\" directories."
-    echo
+    echo -e "[INFO]: Checking on the status of \"standard\" directories.\n"
     check_standard_dirs
-    echo
-    echo "[INFO]: Checking on the status of Git repos."
+    echo -e "\n[INFO]: Checking on the status of Git repos."
     check_repos
 }
 
