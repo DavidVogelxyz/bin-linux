@@ -13,7 +13,7 @@ SCRIPT_NAME="dev-tmux"
 # Note that the list's order is preserved
 SESH=(
     "homedir:${HOME}"
-    "${PREF_SESH}:${HOME}"
+    "scratch:${HOME}"
 )
 
 # `PREF_SESH` will be the open session when `dev-tmux` returns
