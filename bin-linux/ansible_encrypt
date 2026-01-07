@@ -6,13 +6,13 @@
 # License:  GPL v3.0
 # Desc:     `ansible_encrypt` encrypts/decrypts Ansible data, without Ansible-added newlines.
 
-# Takes message in as argument, prints to STDERR, and exits with return code `1`.
+# Prints provided message to STDERR; then, exits with return code `1`
 error() {
     echo "$1" >&2 \
         && exit 1
 }
 
-# Takes message in as argument and prints to STDERR.
+# Prints provided message to STDERR
 warn() {
     echo "$1" >&2
 }
