@@ -21,6 +21,7 @@ Table of contents
     - [dotfile-deploy](#dotfile-deploy)
     - [git_compare_dates](#git_compare_dates)
     - [git_package_manager](#git_package_manager)
+    - [gpg_encrypt_file](#gpg_encrypt_file)
     - [openssl-password-hash](#openssl-password-hash)
     - [show-ssh-agent](#show-ssh-agent)
 
@@ -102,6 +103,14 @@ Date created: 2025 Sep 14, Sun
 On a machine where Git repos are all stored in the same directory (ex. `~/.local/src`), `git_package_manager` can quickly iterate through the repos in that directory, and fetch and pull any updates. This script can be modified to point to a "development directory"; however, it's best suited for a directory where repo changes are rarely made.
 
 As an example, if `~/.local/src` is being utilized to store a bunch of repos with scripts in them, then one call to `git_package_manager` can facilitate the update of many repos, ensuring that the scripts within are always up-to-date.
+
+### gpg_encrypt_file
+
+Date created: 2026 Jan 9, Fri
+
+`gpg_encrypt_file` was written in order simplify the process of encrypting a file with GPG.
+
+The purpose of this script to make encrypting a file using GPG more user-friendly. `gpg_encrypt_file` leverages `fzf`, a fuzzy finder, to simplify selecting both the GPG recipient and the file to encrypt.
 
 ### openssl-password-hash
 

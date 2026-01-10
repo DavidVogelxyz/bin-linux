@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+# Name:     gpg_encrypt_file
+# Author:   David Vogel <david@davidvogel.xyz>
+# Date:     2026 Jan 9, Fri
+# License:  GPL v3.0
+# Desc:     `gpg_encrypt_file` simplifies GPG file encryption.
+
+get_file_to_encrypt() {
+    FILES=($(find . -maxdepth 1 -type f))
+
+    if (( "${#FILES[@]}" == 0 )); then
+        echo "[ERROR]: There are no files in this directory."
+        exit 1
+    fi
+
+    for file in "${FILES[@]}" ; do
+        echo "${file//.\/}"
+    done | fzf
+}
+
+get_recipient() {
+    while read -r line; do
+        # drop keyring
+        if [[ "$line" =~ ^"[" ]]; then
+            continue
+        # drop formatting
+        elif [[ "$line" =~ ^"-" ]]; then
+            continue
+        # get fingerprint
+        elif [[ "$line" =~ ^pub ]]; then
+            local pub="${line##*/}"
+            pub="${pub%% *}"
+        # get user info
+        elif [[ "$line" =~ ^uid ]]; then
+            local user="${line#* }"
+            user="${user//*] }"
+        # add to `fzf`
+        elif ! [[ "$line" ]]; then
+            echo "$user $pub"
+        fi
+    done < <(gpg --list-public-keys --keyid-format short) | fzf
+}
+
+get_output_filename() {
+    # Name the new file
+    read -p "Name of the new file: " OUTPUT
+
+    echo "${OUTPUT%%.*}.txt"
+}
+
+confirmation_step() {
+    echo -e "\nPlease confirm the following:"
+    echo -e "\nFile to encrypt = $FILE_TO_ENCRYPT"
+    echo "Recipient = ${RECIPIENT% *}"
+    echo "Recipent FP = $FP"
+    echo -e "Output file = ${OUTPUT}\n"
+
+    echo "Is the above correct? (Answer \"Y\" or \"N\")"
+    read -p "> " -r
+
+    case $REPLY in
+        [Yy]*)
+            echo -e "\nOk, encrypting the file...\n"
+            encrypt_file
+            ;;
+        [Nn]*)
+            echo -e "\nOk, exiting the program.\n"
+            ;;
+        *)
+            echo -e "\nSleeping for 2 seconds and trying again..."
+            sleep 2
+            confirmation_step
+            ;;
+    esac
+}
+
+encrypt_file() {
+    gpg --encrypt --armor --recipient $FP --output $OUTPUT $FILE_TO_ENCRYPT
+    echo "File \"$OUTPUT\" is now available!"
+}
+
+main() {
+    # Get user choice of "file to encrypt"
+    local FILE_TO_ENCRYPT="$(get_file_to_encrypt)"
+
+    # Get user choice of recipient
+    local RECIPIENT="$(get_recipient)"
+
+    # Get recipient's GPG pubkey fingerprint
+    local FP="${RECIPIENT##* }"
+
+    echo "Please name the file, but note that it will be in \`.txt\` format."
+    local OUTPUT="$(get_output_filename)"
+
+    confirmation_step
+}
+
+main
