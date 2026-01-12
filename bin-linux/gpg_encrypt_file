@@ -6,6 +6,12 @@
 # License:  GPL v3.0
 # Desc:     `gpg_encrypt_file` simplifies GPG file encryption.
 
+dep_check() {
+    if ! [[ $(command -v fzf) ]]; then
+        error "[ERROR]: \`fzf\` does not appear to be installed. Exiting now."
+    fi
+}
+
 get_file_to_encrypt() {
     FILES=($(find . -maxdepth 1 -type f))
 
@@ -81,6 +87,8 @@ encrypt_file() {
 }
 
 main() {
+    dep_check
+
     # Get user choice of "file to encrypt"
     local FILE_TO_ENCRYPT="$(get_file_to_encrypt)"
 
