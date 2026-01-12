@@ -12,19 +12,6 @@ dep_check() {
     fi
 }
 
-get_file_to_encrypt() {
-    FILES=($(find . -maxdepth 1 -type f))
-
-    if (( "${#FILES[@]}" == 0 )); then
-        echo "[ERROR]: There are no files in this directory."
-        exit 1
-    fi
-
-    for file in "${FILES[@]}" ; do
-        echo "${file//.\/}"
-    done | fzf
-}
-
 get_recipient() {
     while read -r line; do
         # drop keyring
@@ -48,6 +35,19 @@ get_recipient() {
     done < <(gpg --list-public-keys --keyid-format short) | fzf
 }
 
+get_file_to_encrypt() {
+    FILES=($(find . -maxdepth 1 -type f))
+
+    if (( "${#FILES[@]}" == 0 )); then
+        echo "[ERROR]: There are no files in this directory."
+        exit 1
+    fi
+
+    for file in "${FILES[@]}" ; do
+        echo "${file//.\/}"
+    done | fzf
+}
+
 get_output_filename() {
     # Name the new file
     read -p "Name of the new file: " OUTPUT
@@ -55,14 +55,16 @@ get_output_filename() {
     echo "${OUTPUT%%.*}.txt"
 }
 
-confirmation_step() {
+print_selections() {
     echo -e "\nPlease confirm the following:"
-    echo -e "\nFile to encrypt = $FILE_TO_ENCRYPT"
-    echo "Recipient = ${RECIPIENT% *}"
+    echo -e "\nRecipient = ${RECIPIENT% *}"
     echo "Recipent FP = $FP"
-    echo -e "Output file = ${OUTPUT}\n"
+    echo "File to encrypt = $FILE_TO_ENCRYPT"
+    echo "Output file = ${OUTPUT}"
+}
 
-    echo "Is the above correct? (Answer \"Y\" or \"N\")"
+confirmation_step() {
+    echo -e "\nIs the above correct? (Answer \"Y\" or \"N\")"
     read -p "> " -r
 
     case $REPLY in
@@ -89,18 +91,19 @@ encrypt_file() {
 main() {
     dep_check
 
-    # Get user choice of "file to encrypt"
-    local FILE_TO_ENCRYPT="$(get_file_to_encrypt)"
-
     # Get user choice of recipient
     local RECIPIENT="$(get_recipient)"
 
     # Get recipient's GPG pubkey fingerprint
     local FP="${RECIPIENT##* }"
 
+    # Get user choice of "file to encrypt"
+    local FILE_TO_ENCRYPT="$(get_file_to_encrypt)"
+
     echo "Please name the file, but note that it will be in \`.txt\` format."
     local OUTPUT="$(get_output_filename)"
 
+    print_selections
     confirmation_step
 }
 
