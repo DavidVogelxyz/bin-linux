@@ -37,7 +37,7 @@ enable_bridge() {
     if [[ "${#interfaces[@]}" == 1 ]] && [[ "${#bridges[@]}" == 1 ]]; then
         sudo brctl addif ${bridges[0]} ${interfaces[0]}
         sudo ip link set ${bridges[0]} up
-        echo "[INFO]: Enabled bridge ${bridges[0]} on interface ${interfaces[0]}!"
+        echo "[INFO]: Enabled bridge \`${bridges[0]}\` on interface \`${interfaces[0]}\`!"
     else
         echo "[ERROR]: Found wrong number of bridges (${bridges[@]}) or interfaces (${interfaces[@]})."
         exit 1
