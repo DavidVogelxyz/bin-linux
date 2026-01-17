@@ -112,6 +112,19 @@ check_standard_dirs() {
     done
 }
 
+clone_repo() {
+    git clone "$1" "$2" > /dev/null 2>&1
+}
+
+link_repo() {
+    # `busybox`'s `ln` does not have the `-r` option
+    if [[ "$(command -v busybox)" ]]; then
+        ln -s "$1" "$2"
+    else
+        ln -sr "$1" "$2"
+    fi
+}
+
 check_repos() {
     while read -r repo_path repo_remote symlink_src symlink_dest; do
         echo
@@ -131,23 +144,27 @@ check_repos() {
                         echo "[WARN]: Git repo \`${repo_path}\` does not point to the correct remote. Backing up and cloning the Git repo."
                         cd - > /dev/null 2>&1
                         back_up_path "$repo_path"
-                        git clone "$repo_remote" "$repo_path" > /dev/null 2>&1
+                        clone_repo "$repo_remote" "$repo_path"
                     fi
                 else
                     echo "[WARN]: \`${repo_path}\` is not a Git repo. Backing up and cloning the Git repo."
                     cd - > /dev/null 2>&1
                     back_up_path "$repo_path"
-                    git clone "$repo_remote" "$repo_path" > /dev/null 2>&1
-                fi;;
+                    clone_repo "$repo_remote" "$repo_path"
+                fi
+                ;;
             "file" | "symlink")
-                echo "[WARN]: \`${repo_path}\` is a \"${type}\". Backing up and cloning the Git repo."
+                echo "[WARN]: \`${repo_path}\` is a \"${type_repo_path}\". Backing up and cloning the Git repo."
                 back_up_path "$repo_path"
-                git clone "$repo_remote" "$repo_path" > /dev/null 2>&1;;
+                clone_repo "$repo_remote" "$repo_path"
+                ;;
             "nonexistent")
                 echo "[WARN]: Git repo \`${repo_path}\` doesn't exist. Creating now."
-                git clone "$repo_remote" "$repo_path" > /dev/null 2>&1;;
+                clone_repo "$repo_remote" "$repo_path"
+                ;;
             "unknown")
-                echo "[WARN]: \`${repo_path}\` is an unknown filetype. Review manually.";;
+                echo "[WARN]: \`${repo_path}\` is an unknown filetype. Review manually."
+                ;;
         esac
 
         # Next, check the relevant symlinks (or continue if not applicable)
@@ -161,17 +178,21 @@ check_repos() {
                 else
                     echo "[WARN]: Symlink \`${symlink_dest}\` does not point to \`${symlink_src}\`. Backing up and re-creating the symlink."
                     back_up_path "$symlink_dest"
-                    ln -sr "$symlink_src" "$symlink_dest"
-                fi;;
+                    link_repo "$symlink_src" "$symlink_dest"
+                fi
+                ;;
             "file" | "directory")
-                echo "[WARN]: \`${symlink_dest}\` is a \"${type}\". Backing up and re-creating the symlink."
+                echo "[WARN]: \`${symlink_dest}\` is a \"${type_symlink_dest}\". Backing up and re-creating the symlink."
                 back_up_path "$symlink_dest"
-                ln -sr "$symlink_src" "$symlink_dest";;
+                link_repo "$symlink_src" "$symlink_dest"
+                ;;
             "nonexistent")
                 echo "[WARN]: Symlink \`${symlink_dest}\` doesn't exist. Creating now."
-                ln -sr "$symlink_src" "$symlink_dest";;
+                link_repo "$symlink_src" "$symlink_dest"
+                ;;
             "unknown")
-                echo "[WARN]: \`${symlink_dest}\` is an unknown filetype. Review manually.";;
+                echo "[WARN]: \`${symlink_dest}\` is an unknown filetype. Review manually."
+                ;;
         esac
     done < <(printf "%s\n" "${REPO_LIST[@]}")
 }
