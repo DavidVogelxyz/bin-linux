@@ -13,7 +13,11 @@ DIR_BACKUPS="${HOME}/backup-configs_${DATE}"
 
 DIRS_TO_CONFIRM=(
     "${HOME}/.cache"
+    "${HOME}/.cache/bash"
+    "${HOME}/.cache/zsh"
     "${HOME}/.config"
+    "${HOME}/.config/shell"
+    "${HOME}/.config/zsh"
     "${HOME}/.local"
     "${HOME}/.local/bin"
     "${HOME}/.local/share"
