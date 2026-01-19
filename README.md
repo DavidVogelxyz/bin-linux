@@ -16,6 +16,7 @@ Table of contents
     - [ansible_encrypt](#ansible_encrypt)
     - [bip-39-passwords](#bip-39-passwords)
     - [bridged_networking](#bridged_networking)
+    - [chmod_keys](#chmod_keys)
     - [daily-note](#daily-note)
     - [dev-tmux](#dev-tmux)
     - [dotfile-deploy](#dotfile-deploy)
@@ -55,6 +56,16 @@ Date created: 2025 Dec 6, Sat
 This script is useful in a very specific context: a machine that is a QEMU hypervisor and also has multiple Ethernet interfaces. In such a situation, a bridged network configuration may be employed so that the VMs are assigned their own IP addresses. However, if the machine has multiple Ethernet interfaces (`eth0` and `eth1`), a race condition may occur where the "wrong" interface is assigned to the interface that hosts the bridge.
 
 `bridged_networking` is useful after boot, when the machine doesn't have a network connection due to this situation. It will loop through the interfaces, figure out which interface is connected to the network, and will restart the bridge on that interface.
+
+### chmod_keys
+
+Date created: 2024 Oct 26, Sat
+
+`chmod_keys` was written to make private keys private again.
+
+When managing private keys (GPG, SSH, SSL, etc) through a Git repo, certain Git actions will result in private keys being set with permissions of `644`. Not only does this result in a situation where all users on the machine can view the private keys, but certain software (such as SSH) will error when attempting to use the key, because the permissions on the private key are "too permissive".
+
+`chmod_keys` solves this by recursively iterating through a directory, creating a list of private keys, and then changing permissions on all of those keys to `600`. `chmod_keys` will perform this action verbosely, and will only print output for keys that had their permissions changed, informing the user of changes made to any private keys.
 
 ### daily-note
 

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Name:     chmod_keys
+# Author:   David Vogel <david@davidvogel.xyz>
+# Date:     2024 Oct 26, Sat
+# License:  GPL v3.0
+# Desc:     `chmod_keys` makes private keys private again.
+
+# Only print the output for keys that have their permissions changed
+change_perms() {
+    chmod -v 600 "$1" | grep "changed"
+}
+
+main() {
+    # Fail if `$1` is not a directory, or if multiple arguments are passed
+    if ! [[ -d "$1" ]] || [[ "$2" ]]; then
+        echo "[ERROR]: This script expects a single directory to be passed as an argument." >&2
+        exit 1
+    fi
+
+    local DIR="$1"
+
+    # If `$DIR` is a user's `.ssh` directory, attempt to set `config` to `600`
+    if [[ -f "$DIR/config" ]]; then
+        change_perms "$DIR/config"
+    fi
+
+    # Iterate through all private keys in `$DIR`, and attempt to set them to `600`
+    while read -r key; do
+        change_perms "$key"
+    done < <(grep -lr "BEGIN .* PRIVATE KEY" "$DIR")
+
+    return 0
+}
+
+main "$*"
