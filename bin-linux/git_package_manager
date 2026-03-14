@@ -39,10 +39,7 @@ git_mgmt() {
 
     if [[ "$OUTPUT" == "$MSG_REPO_UP_TO_DATE" ]]; then
         repos_no_change+=("$dir")
-        return 0
-    fi
-
-    if ! [[ "$OUTPUT" == "$MSG_REPO_UP_TO_DATE" ]]; then
+    else
         repos_updated+=("$dir")
     fi
 }
