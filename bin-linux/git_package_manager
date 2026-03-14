@@ -15,7 +15,7 @@ git_mgmt() {
         return 0
     fi
 
-    echo "[INFO]: Attempting to update \"$dir\"."
+    echo "[INFO]: Attempting to update \`$dir\`."
 
     git fetch > /dev/null 2>&1
     local EXIT_CODE="$?"
@@ -127,9 +127,16 @@ main() {
     local repos_no_change=()
     local repos_updated=()
 
-    cd $SRC_DIR
+    # If provided a valid directory as an argument, `cd` to it
+    # Otherwise, change directory to `SRC_DIR`
+    if [[ -d "$1" ]]; then
+        cd "$1"
+    else
+        cd $SRC_DIR
+    fi
+
     gpm_loop
     gpm_results
 }
 
-main
+main "$@"
