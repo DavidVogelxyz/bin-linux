@@ -17,7 +17,7 @@ git_mgmt() {
 
     echo "[INFO]: Attempting to update \`$dir\`."
 
-    git fetch > /dev/null 2>&1
+    git fetch --all > /dev/null 2>&1
     local EXIT_CODE="$?"
 
     if [[ "$EXIT_CODE" == 128 ]]; then
