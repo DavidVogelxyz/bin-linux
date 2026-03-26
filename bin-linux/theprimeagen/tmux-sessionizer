@@ -45,23 +45,22 @@ TS_MAX_DEPTH=1
 #       ${HOME}/.config/tmux-sessionizer.conf
 #       ${HOME}/tmux-sessionizer.conf
 source_conf() {
-    CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+    local CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 
-    if [[ -f "${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}/${SCRIPT_NAME}.conf" ]]; then
-        CONFIG_FILE="${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}/${SCRIPT_NAME}.conf"
-    elif [[ -f "${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}.conf" ]]; then
-        CONFIG_FILE="${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}.conf"
-    elif [[ -f "${CONFIG_DIR}/${SCRIPT_NAME}/${SCRIPT_NAME}.conf" ]]; then
-        CONFIG_FILE="${CONFIG_DIR}/${SCRIPT_NAME}/${SCRIPT_NAME}.conf"
-    elif [[ -f "${CONFIG_DIR}/${SCRIPT_NAME}.conf" ]]; then
-        CONFIG_FILE="${CONFIG_DIR}/${SCRIPT_NAME}.conf"
-    elif [[ -f "${HOME}/${SCRIPT_NAME}.conf" ]]; then
-        CONFIG_FILE="${HOME}/${SCRIPT_NAME}.conf"
-    else
-        return 0
-    fi
+    local CONFS=(
+        "${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}/${SCRIPT_NAME}.conf"
+        "${CONFIG_DIR}/bin-linux/${SCRIPT_NAME}.conf"
+        "${CONFIG_DIR}/${SCRIPT_NAME}/${SCRIPT_NAME}.conf"
+        "${CONFIG_DIR}/${SCRIPT_NAME}.conf"
+        "${HOME}/${SCRIPT_NAME}.conf"
+    )
 
-    source "$CONFIG_FILE"
+    for ((i=0; i < "${#CONFS[@]}"; i++)); do
+        if [[ -f "${CONFS[i]}" ]]; then
+            source "${CONFS[i]}"
+            return 0
+        fi
+    done
 }
 
 source_conf
