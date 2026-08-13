@@ -130,22 +130,3 @@ Date created: 2025 Jul 13, Sun
 `openssl-password-hash` was written in order to simplify the process of creating the password hash that would be included in the `/etc/shadow` file.
 
 The purpose of this script is to facilitate password hashing for the purposes of updating password via an Ansible playbook.
-
-### show-ssh-agent
-
-Date created: 2025 Sep 27, Sat
-
-`show-ssh-agent` was written in order to facilitate "connecting to an already existing `ssh-agent` socket" after establishing a `ssh` connection. An important note is that this script is intended for use with `tmux`, and especially with `tmux-sessionizer`.
-
-To explain the use case, imagine a machine (`my-hostname`). A user logs in, and starts adding keys to the `ssh-agent`. After a bit, the user may want to open `tmux` with `dev-tmux`, or may use `tmux-sessionizer` to open new sessions. Regardless, if the `ssh-agent` socket was opened with the initial login shell, all of those `tmux` sessions will have access to the same `ssh-agent` socket (and, therefore, the same SSH keys).
-
-Now, if the user attempts to login to `my-hostname` through a `ssh` connection, the `ssh` session will likely create its own `ssh-agent` socket (or, none at all), and will not have access to SSH keys that were already added on `my-hostname`. While the user *can* attach to one of the already running `tmux` sessions and have access to the same `ssh-agent` socket, any `tmux` session created through the `ssh` connection will ***not*** connect to the agent.
-
-`show-ssh-agent` fixes this by enabling access to the original `ssh-agent` socket, such that all new `tmux` sessions created through the `ssh` connection connect properly to the original socket. To do this:
-
-1. Connect via `ssh`.
-2. Attach to a `tmux` session created locally on `my-hostname`.
-3. Run `show-ssh-agent` to print the socket path.
-4. Detach from that `tmux` session.
-5. Outside of `tmux`, set `SSH_AUTH_SOCK` to the same socket path.
-6. Reattach to `tmux`.
