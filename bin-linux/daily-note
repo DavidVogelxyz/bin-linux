@@ -130,8 +130,8 @@ create_note() {
     pad_subtitle="${pad_subtitle// /-}"
     add_line_with_newline "$pad_subtitle"
 
-    # Add "Completed tasks" subtitle to note
-    subtitle="Completed tasks"
+    # Add "Timeline" subtitle to note
+    subtitle="Timeline"
     add_line "$subtitle"
 
     # Add line of "-" underneath subtitle
@@ -139,8 +139,8 @@ create_note() {
     pad_subtitle="${pad_subtitle// /-}"
     add_line_with_newline "$pad_subtitle"
 
-    # Add "Done" section to note
-    add_line "Done:"
+    # Add "Timeline" section to note
+    add_line "Timeline:"
 }
 
 main() {
