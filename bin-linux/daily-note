@@ -64,19 +64,19 @@ generate_vars() {
     # day as "29"
     d_num="${working_date[2]}"
 
-    # month as "June"; then, month as "june"; then, month as "jun"
+    # month as "June"; then, month as "Jun"; then, month as "jun"
     m_name="${working_date[3]}"
-    m_name_lower="${m_name@L}"
-    m_name_lower="${m_name_lower:0:3}"
+    m_name_short="${m_name:0:3}"
+    m_name_short_lower="${m_name_short@L}"
 
-    # day as "Sunday"; then, day as "sunday"; then, day as "sun"
+    # day as "Sunday"; then, day as "Sun"; then, day as "sun"
     d_name="${working_date[4]}"
-    d_name_lower="${d_name@L}"
-    d_name_lower="${d_name_lower:0:3}"
+    d_name_short="${d_name:0:3}"
+    d_name_short_lower="${d_name_short@L}"
 
     # get dir structure within `DIR_NOTES`; then, get filename of note
-    notedir="${y}/${m_num}_${m_name_lower}"
-    local notefile="${y}-${m_num}-${d_num}_${d_name_lower}.md"
+    notedir="${y}/${m_num}_${m_name_short_lower}"
+    local notefile="${y}-${m_num}-${d_num}_${d_name_short_lower}.md"
 
     # filepath of note
     notepath="${DIR_NOTES}/${notedir}/${notefile}"
@@ -125,7 +125,7 @@ create_note() {
     # remove any leading zeroes from the date numeral
     local d_num="$((10#$d_num))"
 
-    process_line "title" "Notes for $y $m_name $d_num, $d_name"
+    process_line "title" "Notes for $y $m_name_short $d_num (${d_name_short})"
 
     process_line "subtitle" "Notes"
 
